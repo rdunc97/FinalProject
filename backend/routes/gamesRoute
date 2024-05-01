@@ -1,0 +1,93 @@
+import express from 'express';
+import { Game } from '../models/gameModel.js';
+const router = express.Router();
+
+// Route : Save new Game
+router.post('/', async (request, response) => {
+    try {
+        if (
+            !request.body.title || !request.body.developer || !request.body.releaseYear
+        ) {
+            return response.status(400).send({
+                message: 'please provide the fields: title, developer, and releaseYear',
+            });
+        }
+        const newGame = {
+            title: request.body.title,
+            developer: request.body.developer,
+            releaseYear : request.body.releaseYear,
+        };
+        const game = await Game.create(newGame);
+        return response.status(201).send(game);
+    } catch (error) {
+        console.log(error.message);
+        response.status(500).send({message: error.message});
+    }
+});
+
+//get all games
+router.get('/', async (request, response) => {
+    try{
+        const games = await Game.find({});
+        return response.status(200).json({
+            count: games.length,
+            data: games
+        });
+    } catch (error) {
+        console.log(error.message);
+        response.status(500).send({ message: error.message});
+    }
+});
+
+
+//get one game by id
+router.get('/:id', async (request, response) => {
+    try{
+
+        const { id } = request.params;
+        const game = await Game.findById(id);
+        return response.status(200).json(game);
+    } catch (error) {
+        console.log(error.message);
+        response.status(500).send({ message: error.message});
+    }
+});
+
+//update a game
+router.put('/:id', async (request, response) => {
+    try{
+        if ( !request.body.title || !request.body.developer || !request.body.releaseYear) {
+            return response.status(400).send({ message: 'need 3 required fields, title, developer, releaseYear'});
+        }
+
+        const { id } = request.params;
+        const result = await Game.findByIdAndUpdate(id, request.body);
+
+        if(!result) {
+            return response.status(404).json ({ message: 'game not found!'});
+        }
+        return response.status(200).send({ message: 'game updated success!'}); 
+
+    } catch (error) {
+        console.log(error.message);
+        response.status(500).send({ message: error.message});
+    }
+});
+
+//remove a game from library
+router.delete('/:id', async (request,response) => {
+    try {
+        const { id } = request.params;
+        const result = await Game.findByIdAndDelete(id);
+
+        if(!result) {
+            response.status(404).json({ message: 'game not found'});
+        }
+        return response.status(200).send({ message: 'game delete success!'});
+    } catch (error) {
+        console.log(error.message);
+        response.status(500).send({ message: error.message});
+    }
+});
+
+export default router;
